@@ -5,7 +5,7 @@ import cv2
 import os
 from dcgan import DCGAN
 
-EPOCHS=30
+EPOCHS=200
 STEPS=2
 ZDIM=100
 
@@ -23,12 +23,15 @@ if __name__ == "__main__":
 
     for epoch in range(EPOCHS):
         real_batch_list = []
-        for batch in train_ds:
+        accumulated_dl, accumulated_gl = 0., 0.
+        for i, batch in enumerate(train_ds):
             if len(real_batch_list) < STEPS:
                 real_batch_list.append(batch)
                 continue
             dl, gl = gan.train_on_batch(real_batch_list)
-            print("[%2d] %2.4f %2.4f" % (epoch, float(dl), float(gl)))
+            accumulated_dl += float(dl)
+            accumulated_gl += float(gl)
+            print("[%2d] %2.4f %2.4f" % (epoch, accumulated_dl / (i + 1), accumulated_gl / (i + 1)))
             real_batch_list = []
 
         z = tf.random.normal((5 * 5, ZDIM))
@@ -44,5 +47,5 @@ if __name__ == "__main__":
 
         if not os.path.exists("cifar10_images"):
             os.makedirs("cifar10_images")
-        print(cv2.imwrite(os.path.join("cifar10_images", "epoch%d.png"%epoch), (im + 1.0) * 128.))
+        print(cv2.imwrite(os.path.join("cifar10_images", "epoch%d.png"%epoch), (out_img + 1.0) * 128.))
         print("EPOCH %d finished"%epoch)
