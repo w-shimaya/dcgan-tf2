@@ -12,6 +12,6 @@ Deep Convolutional Generative Adversarial Network [reference](https://arxiv.org/
 '4.2.0'
 ```
 
-# Samples
-## CIFAR-10
-![images generated rondomly after 130 epoch training](https://github.com/w-shimaya/dcgan-tf2/sample/cifar10_images/epoch130.png)
+## Samples
+### CIFAR-10
+![images generated rondomly after 130 epoch training](https://github.com/w-shimaya/dcgan-tf2/blob/master/sample/cifar10_images/epoch130.png)
