@@ -45,7 +45,13 @@ class DCGAN(K.Model):
 
     @tf.function
     def train_on_batch(self, real_batch_list):
+        """
+        update weights and return the values of loss function
+
+        real_batch_list: list of tensors the shape of which is [batch, y, x, c]
+        """
         cross_entropy = K.losses.BinaryCrossentropy(from_logits=True)
+        # update the discriminator several times
         for real_batch in real_batch_list:
             with tf.GradientTape() as t:
                 z = tf.random.normal((tf.shape(real_batch)[0], self.latent_dim))
@@ -58,6 +64,7 @@ class DCGAN(K.Model):
             grads = t.gradient(d_loss, self.discriminator.trainable_variables)
             self.d_opt.apply_gradients(zip(grads, self.discriminator.trainable_variables))
 
+        # update the generator
         with tf.GradientTape() as t:
             z = tf.random.normal((tf.shape(real_batch)[0], self.latent_dim))
             fake_batch = self.generator(z)

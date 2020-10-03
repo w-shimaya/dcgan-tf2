@@ -24,6 +24,7 @@ class WDCGANGP(K.Model):
             L.Activation(tf.nn.tanh), 
         ])
 
+        # No batchnorms in critic (see original paper)
         self.critic = K.Sequential([
             L.Conv2D(128, 5, 2, input_shape=(32, 32, 3), padding="same"), 
             L.LeakyReLU(0.2), 
@@ -46,34 +47,22 @@ class WDCGANGP(K.Model):
         self.generator.set_weights(model.generator.get_weights())
         self.critic.set_weights(model.critic.get_weights())
 
+    # TODO: delete argument n_critic 
     @tf.function
     def train_on_batch(self, real_batch_list, n_critic=5, gp_lambda=10.0):
         batch_size = tf.shape(real_batch_list[0])[0]
         n_critic = len(real_batch_list)
+        # update the critic n_critic times
         for real_batch in real_batch_list:
             with tf.GradientTape() as t:
                 critic_loss, gp = self.critic_loss_fn(real_batch)
                 loss = critic_loss + gp_lambda * gp
-                #z = tf.random.normal((tf.shape(real_batch)[0], self.latent_dim))
-                #eps = tf.random.uniform((tf.shape(real_batch)[0], 1, 1, 1), minval=0., maxval=1.)
-                #fake_batch = self.generator(z, training=False)
-                #with tf.GradientTape() as tt:
-                    #blend = eps * real_batch + (1. - eps) * fake_batch
-                    #tt.watch(blend)
-                    #gp = self.critic(blend)
-                #grad = tt.gradient(gp, blend)[0]
-                #norm_grad = tf.sqrt(tf.reduce_sum(tf.square(grad), axis=[1, 2, 3]))
-
-                #critic_loss = self.critic(fake_batch) - self.critic(real_batch) + gp_lambda * tf.square(norm_grad - 1.)
-                #critic_loss = tf.reduce_mean(critic_loss)
             critic_grad = t.gradient(loss, self.critic.trainable_variables)
             self.c_opt.apply_gradients(zip(critic_grad, self.critic.trainable_variables))
 
+        # update the generator
         with tf.GradientTape() as t:
             gen_loss = self.generator_loss_fn(batch_size)
-            #z = tf.random.normal((tf.shape(real_batch)[0], self.latent_dim))
-            #fake_batch = self.generator(z)
-            #gen_loss = tf.reduce_mean(-self.critic(fake_batch, training=False))
         gen_grad = t.gradient(gen_loss, self.generator.trainable_variables)
         self.g_opt.apply_gradients(zip(gen_grad, self.generator.trainable_variables))
 

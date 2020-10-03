@@ -41,6 +41,7 @@ if __name__ == "__main__":
         for i, batch in enumerate(train_ds):
             scaled = tf.image.resize(batch, [64, 64])
             if args.model == "GAN":
+                # update the discriminator `STEPS` times and generator 1 time
                 if len(real_batch_list) < STEPS:
                     real_batch_list.append(scaled)
                     continue
@@ -52,9 +53,11 @@ if __name__ == "__main__":
             accumulated_gl += float(gl)
             print("\r[%2d] %2.4f %2.4f" % (epoch, accumulated_dl / (i + 1), accumulated_gl / (i + 1)), end="")
 
+        # generate 25 images from latent values normally distributed.
         z = tf.random.normal((5 * 5, ZDIM))
         imgs = gan.generator(z, training=False).numpy()
         out_img = np.empty((5*64, 5*64, 3), dtype=np.float32)
+        # tile generated images
         for i, im in enumerate(imgs):
             x = i // 5
             y = i % 5
